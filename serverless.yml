@@ -1,0 +1,55 @@
+service: reto-softek
+frameworkVersion: "3"
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-auto-swagger
+  
+provider:
+  name: aws
+  environment:
+    SWAPI_BASE_URL: https://swapi.py4e.com/api/
+  runtime: nodejs18.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: 'dynamodb:PutItem'
+          Resource: '*'
+        - Effect: Allow
+          Action: 'dynamodb:Scan'
+          Resource: '*'
+
+functions:
+  cmd:
+    handler: ./src/handlers/save-data.main
+    events:
+      - http:
+          path: /
+          method: post
+  qry:
+    handler: ./src/handlers/get-data.main
+    events:
+      - http:
+          path: /
+          method: get
+
+resources:
+  Resources:
+    eventTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: eventTable
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: name
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: name
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
